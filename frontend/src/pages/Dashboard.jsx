@@ -94,7 +94,7 @@ export default function Dashboard({ onLogout, onProfile, onGroups, onNotificatio
   const handleArchive = async (taskId) => {
     try {
       await archiveTask(taskId);
-      setMessage('Görev arşivlendi 🗂');
+      setMessage('Görev arşivlendi, profil sekmesinden görebilirsin 🗂');
       loadData();
       setTimeout(() => setMessage(''), 3000);
     } catch (e) {
