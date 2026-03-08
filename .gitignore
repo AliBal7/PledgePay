@@ -13,3 +13,5 @@ frontend/build/
 # Genel
 *.pyc
 .DS_Store
+
+node_modules/
