@@ -2,17 +2,15 @@ import { useState, useEffect } from 'react';
 import { getMe, getNotifications, markNotificationRead, markAllNotificationsRead, joinGroup } from '../services/api';
 
 export default function Notifications({ onBack }) {
-  const [user, setUser] = useState(null);
   const [notifications, setNotifications] = useState([]);
   const [message, setMessage] = useState('');
   const [error, setError] = useState('');
 
-  useEffect(() => { loadData(); }, []);
+  useEffect(() => { loadData(); }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
   const loadData = async () => {
     try {
-      const [userRes, notifRes] = await Promise.all([getMe(), getNotifications()]);
-      setUser(userRes.data);
+      const [, notifRes] = await Promise.all([getMe(), getNotifications()]);
       setNotifications(notifRes.data);
     } catch (e) { console.error(e); }
   };
@@ -29,8 +27,8 @@ export default function Notifications({ onBack }) {
 
   const handleAcceptInvite = async (notification) => {
     try {
-      const data = JSON.parse(notification.data);
-      const res = await joinGroup(data.invite_code);
+      const parsedData = JSON.parse(notification.data);
+      const res = await joinGroup(parsedData.invite_code);
       setMessage(res.data.message);
       await markNotificationRead(notification.id);
       loadData();
@@ -101,7 +99,6 @@ export default function Notifications({ onBack }) {
         ) : (
           <div className="space-y-3">
             {notifications.map(notif => {
-              const data = notif.data ? JSON.parse(notif.data) : {};
               return (
                 <div key={notif.id}
                   onClick={() => !notif.is_read && handleRead(notif.id)}
@@ -122,7 +119,6 @@ export default function Notifications({ onBack }) {
                         {new Date(notif.created_at).toLocaleDateString('tr-TR', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' })}
                       </p>
 
-                      {/* Grup daveti için katıl butonu */}
                       {notif.type === 'group_invite' && !notif.is_read && (
                         <div className="flex gap-2 mt-3">
                           <button

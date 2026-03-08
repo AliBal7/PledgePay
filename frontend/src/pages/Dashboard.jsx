@@ -18,7 +18,7 @@ export default function Dashboard({ onLogout, onProfile, onGroups, onNotificatio
   const [verifying, setVerifying] = useState(null);
   const [confirmForfeit, setConfirmForfeit] = useState(null);
 
-  useEffect(() => { loadData(); }, []);
+  useEffect(() => { loadData(); }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
   const loadData = async () => {
     try {
