@@ -1,7 +1,7 @@
 import axios from 'axios';
 
 const API = axios.create({
-  baseURL: 'https://pledgepay-production.up.railway.app',
+  baseURL: process.env.REACT_APP_API_URL || 'https://pledgepay-production.up.railway.app',
 });
 
 // Her istekte token otomatik ekle
@@ -12,6 +12,18 @@ API.interceptors.request.use((config) => {
   }
   return config;
 });
+
+// 401 durumunda otomatik logout
+API.interceptors.response.use(
+  (response) => response,
+  (error) => {
+    if (error.response?.status === 401) {
+      localStorage.removeItem('token');
+      window.location.reload();
+    }
+    return Promise.reject(error);
+  }
+);
 
 // Auth
 export const register = (data) => API.post('/auth/register', data);
@@ -34,7 +46,7 @@ export const forfeitTask = (taskId) => API.post(`/tasks/${taskId}/forfeit`);
 export const getStats = () => API.get('/profile/stats');
 export const getTransactions = () => API.get('/profile/transactions');
 export const changePassword = (oldPassword, newPassword) => 
-  API.put(`/profile/change-password?old_password=${oldPassword}&new_password=${newPassword}`);
+  API.put('/profile/change-password', { old_password: oldPassword, new_password: newPassword });
 
 // Groups
 export const getGroups = () => API.get('/groups/');

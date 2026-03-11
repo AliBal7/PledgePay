@@ -4,10 +4,10 @@ from app.database import get_db
 from app.models.models import Task, Transaction, TaskStatus, VerificationMethod
 from app.routes.users import get_current_user
 from app.models.models import User
-from pydantic import BaseModel
+from app.utils import calculate_distance
+from pydantic import BaseModel, field_validator
 from datetime import datetime
 from typing import Optional
-import math
 
 router = APIRouter(prefix="/tasks", tags=["tasks"])
 
@@ -20,6 +20,21 @@ class TaskCreate(BaseModel):
     location_radius: Optional[float] = 200.0
     deadline: datetime
     stake_amount: float
+
+    @field_validator("stake_amount")
+    @classmethod
+    def validate_stake(cls, v):
+        if v <= 0:
+            raise ValueError("Taahhüt miktarı 0'dan büyük olmalı")
+        return v
+
+    @field_validator("title")
+    @classmethod
+    def validate_title(cls, v):
+        v = v.strip()
+        if not v:
+            raise ValueError("Başlık boş olamaz")
+        return v
 
 class TaskResponse(BaseModel):
     id: int
@@ -37,15 +52,6 @@ class TaskResponse(BaseModel):
 
     class Config:
         from_attributes = True
-
-def calculate_distance(lat1, lng1, lat2, lng2) -> float:
-    R = 6371000
-    phi1 = math.radians(lat1)
-    phi2 = math.radians(lat2)
-    dphi = math.radians(lat2 - lat1)
-    dlambda = math.radians(lng2 - lng1)
-    a = math.sin(dphi/2)**2 + math.cos(phi1) * math.cos(phi2) * math.sin(dlambda/2)**2
-    return R * 2 * math.atan2(math.sqrt(a), math.sqrt(1-a))
 
 @router.post("/", response_model=TaskResponse)
 def create_task(task_data: TaskCreate, db: Session = Depends(get_db), current_user: User = Depends(get_current_user)):

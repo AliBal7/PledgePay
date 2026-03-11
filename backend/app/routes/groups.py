@@ -3,27 +3,18 @@ from sqlalchemy.orm import Session
 from app.database import get_db
 from app.models.models import GroupChallenge, GroupMember, TaskStatus, VerificationMethod, User, Transaction, Notification
 from app.routes.users import get_current_user
-from pydantic import BaseModel
+from app.utils import calculate_distance, PLATFORM_COMMISSION_RATE
+from pydantic import BaseModel, field_validator
 from datetime import datetime
 from typing import Optional
 import random
 import string
-import math
 import json
 
 router = APIRouter(prefix="/groups", tags=["groups"])
 
 def generate_invite_code(length=8):
     return ''.join(random.choices(string.ascii_uppercase + string.digits, k=length))
-
-def calculate_distance(lat1, lng1, lat2, lng2) -> float:
-    R = 6371000
-    phi1 = math.radians(lat1)
-    phi2 = math.radians(lat2)
-    dphi = math.radians(lat2 - lat1)
-    dlambda = math.radians(lng2 - lng1)
-    a = math.sin(dphi/2)**2 + math.cos(phi1) * math.cos(phi2) * math.sin(dlambda/2)**2
-    return R * 2 * math.atan2(math.sqrt(a), math.sqrt(1-a))
 
 class GroupCreate(BaseModel):
     title: str
@@ -35,6 +26,21 @@ class GroupCreate(BaseModel):
     stake_amount: float
     deadline: datetime
     max_members: Optional[int] = 10
+
+    @field_validator("stake_amount")
+    @classmethod
+    def validate_stake(cls, v):
+        if v <= 0:
+            raise ValueError("Taahhüt miktarı 0'dan büyük olmalı")
+        return v
+
+    @field_validator("title")
+    @classmethod
+    def validate_title(cls, v):
+        v = v.strip()
+        if not v:
+            raise ValueError("Başlık boş olamaz")
+        return v
 
 class GroupResponse(BaseModel):
     id: int
@@ -361,7 +367,7 @@ def _distribute_rewards(challenge: GroupChallenge, members: list, db: Session):
     else:
         # Kazananlar kaybedenlerden pay alır
         total_lost = challenge.stake_amount * len(losers)
-        commission = total_lost * 0.10
+        commission = total_lost * PLATFORM_COMMISSION_RATE
         distributable = total_lost - commission
         per_winner = distributable / len(winners)
 
