@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback } from 'react';
-import { getMe, getGroups, createGroup, joinGroup, getGroupDetail, verifyGroup, finalizeGroup, inviteByUsername, forfeitGroup } from '../services/api';
+import { getMe, getGroups, createGroup, joinGroup, getGroupDetail, verifyGroup, finalizeGroup, inviteByUsername, forfeitGroup, archiveGroup } from '../services/api';
 import MapPicker from '../components/MapPicker';
 
 export default function Groups({ onBack }) {
@@ -15,6 +15,7 @@ export default function Groups({ onBack }) {
   const [verifying, setVerifying] = useState(false);
   const [confirmForfeit, setConfirmForfeit] = useState(false);
   const [creating, setCreating] = useState(false);
+  const [archiving, setArchiving] = useState(false);
   const [form, setForm] = useState({
     title: '', description: '', verification_method: 'manual',
     stake_amount: 100, deadline: '', location_lat: null, location_lng: null,
@@ -108,6 +109,24 @@ export default function Groups({ onBack }) {
       setTimeout(() => setError(''), 4000);
     }
     setVerifying(false);
+  };
+
+  const handleArchiveGroup = async (groupId) => {
+    if (archiving) return;
+    setArchiving(true);
+    try {
+      await archiveGroup(groupId);
+      setSelectedGroup(null);
+      setGroupDetail(null);
+      setMessage('Grup arşivlendi 🗂');
+      loadData();
+      setTimeout(() => setMessage(''), 3000);
+    } catch (e) {
+      const detail = e.response?.data?.detail;
+      setError(typeof detail === 'string' ? detail : 'Hata oluştu');
+      setTimeout(() => setError(''), 4000);
+    }
+    setArchiving(false);
   };
 
   const handleForfeit = async (groupId) => {
@@ -288,6 +307,13 @@ export default function Groups({ onBack }) {
             <button onClick={() => handleFinalize(groupDetail.id)}
               className="w-full bg-violet-600/20 hover:bg-violet-600/30 border border-violet-500/30 text-violet-400 font-bold py-3 sm:py-3.5 rounded-xl transition-all text-sm active:scale-[0.98]">
               🏁 Grubu Sonuçlandır & Ödülleri Dağıt
+            </button>
+          )}
+
+          {myMembership?.status !== 'active' && (
+            <button onClick={() => handleArchiveGroup(groupDetail.id)} disabled={archiving}
+              className="w-full bg-transparent hover:bg-zinc-700/30 border border-zinc-700 hover:border-zinc-600 text-zinc-600 hover:text-zinc-400 font-medium py-2 sm:py-2.5 rounded-xl transition-all text-xs sm:text-sm disabled:opacity-50 active:scale-[0.98]">
+              {archiving ? '⏳ Arşivleniyor...' : '🗂 Grubu Arşivle'}
             </button>
           )}
 

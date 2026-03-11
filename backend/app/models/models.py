@@ -89,6 +89,7 @@ class GroupMember(Base):
     challenge_id = Column(Integer, ForeignKey("group_challenges.id"), nullable=False)
     user_id = Column(Integer, ForeignKey("users.id"), nullable=False)
     status = Column(Enum(TaskStatus), default=TaskStatus.active)
+    is_archived = Column(Boolean, default=False)
     joined_at = Column(DateTime, default=datetime.utcnow)
     completed_at = Column(DateTime, nullable=True)
 

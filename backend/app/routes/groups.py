@@ -206,7 +206,10 @@ def invite_by_username(group_id: int, username: str, db: Session = Depends(get_d
 
 @router.get("/")
 def get_my_groups(db: Session = Depends(get_db), current_user: User = Depends(get_current_user)):
-    memberships = db.query(GroupMember).filter(GroupMember.user_id == current_user.id).all()
+    memberships = db.query(GroupMember).filter(
+        GroupMember.user_id == current_user.id,
+        GroupMember.is_archived == False
+    ).all()
     result = []
     for m in memberships:
         challenge = m.challenge
@@ -229,6 +232,20 @@ def get_my_groups(db: Session = Depends(get_db), current_user: User = Depends(ge
             "my_status": m.status.value
         })
     return result
+
+@router.post("/{group_id}/archive")
+def archive_group(group_id: int, db: Session = Depends(get_db), current_user: User = Depends(get_current_user)):
+    membership = db.query(GroupMember).filter(
+        GroupMember.challenge_id == group_id,
+        GroupMember.user_id == current_user.id
+    ).first()
+    if not membership:
+        raise HTTPException(status_code=404, detail="Bu gruba üye değilsin")
+    if membership.status == TaskStatus.active:
+        raise HTTPException(status_code=400, detail="Aktif grup arşivlenemez")
+    membership.is_archived = True
+    db.commit()
+    return {"message": "Grup arşivlendi"}
 
 @router.get("/{group_id}")
 def get_group_detail(group_id: int, db: Session = Depends(get_db), current_user: User = Depends(get_current_user)):

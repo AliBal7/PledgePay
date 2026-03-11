@@ -65,4 +65,5 @@ export const forfeitGroup = (groupId) => API.post(`/groups/${groupId}/forfeit`);
 
 // Archive
 export const archiveTask = (taskId) => API.post(`/tasks/${taskId}/archive`);
+export const archiveGroup = (groupId) => API.post(`/groups/${groupId}/archive`);
 export const getArchivedTasks = () => API.get('/tasks/archived');

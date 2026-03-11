@@ -19,6 +19,11 @@ logger = logging.getLogger(__name__)
 
 Base.metadata.create_all(bind=engine)
 
+# Canlı DB'ye eksik kolonları ekle (idempotent migration)
+with engine.connect() as conn:
+    conn.execute(text("ALTER TABLE group_members ADD COLUMN IF NOT EXISTS is_archived BOOLEAN DEFAULT FALSE"))
+    conn.commit()
+
 app = FastAPI(title="PledgePay API", version="1.1.0")
 
 allowed_origins = os.getenv(
